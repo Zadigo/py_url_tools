@@ -93,3 +93,43 @@ ASCII_TAB_OR_NEWLINE_TRANSLATION_TABLE = {
 
 
 PARENT_DIRECTORIES = re.compile(r"/?(\.\./)+")
+
+
+# HTML constants
+
+ENTITY_REGEX = re.compile(
+    r"&((?P<named>[a-z\d]+)|#(?P<dec>\d+)|#x(?P<hex>[a-f\d]+))(?P<semicolon>;?)",
+    re.IGNORECASE,
+)
+
+HTML_TAG_REGEX = re.compile(r"<[a-zA-Z\/!].*?>", re.DOTALL)
+
+
+BASE_URL_REGEX = re.compile(
+    r"<base\s[^>]*href\s*=\s*[\"\']\s*([^\"\'\s]+)\s*[\"\']", 
+    re.I
+)
+
+
+META_REFRESH_REGEX = re.compile(
+    r'<meta\s[^>]*http-equiv[^>]*refresh[^>]*content\s*=\s*(?P<quote>["\'])(?P<int>(\d*\.)?\d+)\s*;\s*url=\s*(?P<url>.*?)(?P=quote)',
+    re.DOTALL | re.IGNORECASE,
+)
+
+
+META_REFRESH_REGEX_2 = re.compile(
+    r'<meta\s[^>]*content\s*=\s*(?P<quote>["\'])(?P<int>(\d*\.)?\d+)\s*;\s*url=\s*(?P<url>.*?)(?P=quote)[^>]*?\shttp-equiv\s*=[^>]*refresh',
+    re.DOTALL | re.IGNORECASE,
+)
+
+
+CDATA_REGEX = re.compile(
+    r"((?P<cdata_s><!\[CDATA\[)(?P<cdata_d>.*?)(?P<cdata_e>\]\]>))", 
+    re.DOTALL
+)
+
+
+HTML5_WHITESPACE = " \t\n\r\x0c"
+
+
+REMOVECOMMENTS_REGEX = re.compile("<!--.*?(?:-->|$)", re.DOTALL)
