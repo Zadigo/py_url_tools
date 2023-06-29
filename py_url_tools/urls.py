@@ -184,7 +184,6 @@ def add_or_replace_parameter(url, params={}):
     seen_keys = []
 
 
-
 def path_to_file_uri(path) :
     result = pathname2url(os.path.abspath(path))
     return f"file:///{result.lstrip('/')}"
