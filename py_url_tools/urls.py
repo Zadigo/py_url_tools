@@ -1,12 +1,17 @@
 import dataclasses
 import os
+import pathlib
 import posixpath
+import re
 from urllib.parse import (parse_qs, parse_qsl, quote, unquote, urldefrag,
                           urlencode, urlparse, urlsplit, urlunparse,
                           urlunsplit)
 from urllib.request import pathname2url, url2pathname
 
-from py_url_tools import constants, utilities
+import requests
+from py_url_tools.utilities import RANDOM_USER_AGENT
+
+from py_url_tools import PROJECT_PATH, constants, utilities
 
 
 def safe_url_string(url, encoding='utf-8', path_encoding='utf-8', quote_path=True):
@@ -265,22 +270,146 @@ def clean_url(url, keep_blank_values=True, keep_fragments=False, encoding='utf-8
 
 
 class URL:
-    def __init__(self, value):
-        self._url = clean_url(value)
+    """Represents an url
+
+    >>> instance URL('http://example.com')
+    """
+
+    def __init__(self, url_string):
+        self.raw_url = url_string
+        self.url_object = urlparse(self.raw_url)
 
     def __repr__(self):
-        return f'<URL: {self._url}>'
+        return f'<URL: {self.raw_url}>'
 
     def __str__(self):
-        return self._url
+        return self.raw_url
 
-    def __eq__(self, value):
-        if isinstance(value, URL):
-            return value._url == self._url
-        return value == self._url
+    def __eq__(self, obj):
+        return self.raw_url == obj
 
+    def __add__(self, obj):
+        return urljoin(self.raw_url, obj)
 
-# # url = 'http://www.example.org/r%E9sum%E9.xml#r&#xE9;sum&#xE9;'
-# url = 'http://www.example.org/something/here?google=1&a=2'
-# c = clean_url(url)
-# # print(c)
+    def __contains__(self, obj):
+        return obj in self.raw_url
+
+    def __hash__(self):
+        return hash((self.raw_url, self.url_object.path))
+
+    def __len__(self):
+        return len(self.raw_url)
+
+    @property
+    def is_path(self):
+        return self.raw_url.startswith('/')
+
+    @property
+    def is_valid(self):
+        return self.raw_url.startswith('http')
+
+    @property
+    def has_fragment(self):
+        return any([
+            self.url_object.fragment != '',
+            self.raw_url.endswith('#')
+        ])
+
+    @classmethod
+    def create(cls, url):
+        return cls(url)
+
+    @property
+    def is_file(self):
+        path = PROJECT_PATH / 'data/file_extensions.txt'
+        file_extensions = utilities.read_document(path, as_list=True)
+        extension = self.as_path.suffix
+
+        if extension == '':
+            return False
+
+        if self.as_path.suffix in file_extensions:
+            return True
+        return False
+
+    @property
+    def as_path(self):
+        return pathlib.Path(self.raw_url)
+
+    @property
+    def get_extension(self):
+        if self.is_file:
+            return self.as_path.suffix
+        return None
+
+    @property
+    def url_stem(self):
+        return self.as_path.stem
+
+    def is_same_domain(self, url):
+        incoming_url_object = urlparse(url)
+        return incoming_url_object.netloc == self.url_object.netloc
+
+    def get_status(self):
+        headers = {'User-Agent': RANDOM_USER_AGENT()}
+        response = requests.get(self.raw_url, headers=headers)
+        return response.ok, response.status_code
+
+    def compare(self, url_to_compare):
+        """Checks that the given url has the same path
+        as the url to compare
+
+        >>> instance = URL('http://example.com/a')
+        ... instance.compare('http://example.com/a')
+        """
+        if isinstance(url_to_compare, str):
+            url_to_compare = self.create(url_to_compare)
+
+        logic = [
+            self.url_object.path == url_to_compare.url_object.path,
+            url_to_compare.url_object.path == '/' and self.url_object.path == '',
+            self.url_object.path == '/' and url_to_compare.url_object.path == ''
+        ]
+        return any(logic)
+
+    def capture(self, regex):
+        """Captures a value in the given url
+
+        >>> instance = URL('http://example.com/a')
+        ... result = instance.capture(r'\/a')
+        ... result.group(1)
+        ... "/a'
+        """
+        result = re.search(regex, self.raw_url)
+        if result:
+            return result
+        return False
+
+    def test_path(self, regex):
+        """Test if the url's path passes test
+
+        >>> instance = URL('http://example.com/a')
+        ... instance.test_path(r'\/a')
+        ... True
+        """
+        result = re.search(regex, self.raw_url)
+        if result:
+            return True
+        return False
+
+    def decompose_path(self, exclude=[]):
+        """Decomposes an url's path
+
+        >>> instance = URL('http://example.com/a/b')
+        ... instance.decompose_path(exclude=[])
+        ... ["a", "b"]
+        """
+        result = self.url_object.path.split('/')
+
+        def clean_values(value):
+            if value == '':
+                return True
+            if exclude and value in exclude:
+                return True
+            return False
+        return list(utilities.drop_while(clean_values, result))

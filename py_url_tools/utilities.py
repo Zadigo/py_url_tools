@@ -1,6 +1,11 @@
-from functools import wraps
-from urllib.parse import ParseResult, urlparse, quote, unquote_to_bytes, _coerce_args
-from py_url_tools import constants
+from kryptone.utils.file_readers import read_document
+from kryptone.conf import settings
+import random
+from functools import lru_cache, wraps
+from urllib.parse import (ParseResult, _coerce_args, quote, unquote_to_bytes,
+                          urlparse)
+
+from py_url_tools import PROJECT_PATH, constants
 
 
 def string_to_unicode(text, encoding='utf-8', errors='strict'):
@@ -144,3 +149,56 @@ def lazy_text(func):
 
 
 # print(simple_unicode_to_string('something'))
+
+
+def drop_null(items, remove_empty_strings=True):
+    for item in items:
+        if remove_empty_strings and item == '':
+            continue
+
+        if item is not None:
+            yield item
+
+
+def keep_while(predicate, items):
+    for item in items:
+        if not predicate(item):
+            continue
+        yield item
+
+
+def drop_while(predicate, items):
+    for item in items:
+        if predicate(item):
+            continue
+        yield item
+
+
+def tokenize(func):
+    @lru_cache(maxsize=100)
+    def reader(filename, *, as_list=False):
+        data = func(filename)
+        return data.split('\n') if as_list else data
+    return reader
+
+
+@tokenize
+def read_document(filename):
+    """Reads a document of some sort"""
+    path = PROJECT_PATH / 'data'
+    with open(path, mode='r', encoding='utf-8') as f:
+        data = f.read()
+    return data
+
+
+def random_user_agent(func):
+    def wrapper():
+        data = func(
+            PROJECT_PATH / 'data/user_agents.txt'
+        )
+        user_agents = data.split('\n')
+        return random.choice(user_agents)
+    return wrapper
+
+
+RANDOM_USER_AGENT = random_user_agent(read_document)
