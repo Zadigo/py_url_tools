@@ -4,6 +4,7 @@ from re import Match
 from typing import Any, Literal, Type, Union
 from urllib.parse import ParseResult, ParseResultBytes
 
+
 def safe_url_string(
     url: str,
     encoding: str = Literal['utf-8'],

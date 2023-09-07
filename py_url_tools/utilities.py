@@ -1,10 +1,10 @@
-from kryptone.utils.file_readers import read_document
-from kryptone.conf import settings
 import random
 from functools import lru_cache, wraps
 from urllib.parse import (ParseResult, _coerce_args, quote, unquote_to_bytes,
                           urlparse)
 
+from kryptone.conf import settings
+from kryptone.utils.file_readers import read_document
 from py_url_tools import PROJECT_PATH, constants
 
 
