@@ -7,10 +7,10 @@ from py_url_tools import constants, utilities
 
 class ReplaceEntities:
     """
+    Replace entities in a given string
+
     >>> replace_entities(b'Price: &pound;100')
-    ... 'Price: \\xa3100'
-    ... replace_entities(b'Price: &pound;100')
-    Price: £100
+    ... "Price: £100"
     """
 
     def __call__(self, text, keep=[], **kwargs):
@@ -76,6 +76,8 @@ def remove_comments(text, encoding='utf-8'):
 
 class RemoveHTMLTags:
     """
+    Removes HTML tags from a given string
+
     >>> text = '<div><p><b>This is a link:</b> <a href="http://www.example.com">example</a></p></div>'
     ... "This is a link: example"
     """
