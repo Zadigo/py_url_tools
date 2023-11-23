@@ -1,8 +1,6 @@
 from ast import List
 from typing import Any, Literal
 
-
-
 class ReplaceEntities:
     def __call__(self, text: str, keep: list = ..., **kwargs: Any) -> str: ...
 

@@ -57,12 +57,22 @@ convert_entity = ReplaceEntities()
 
 
 def has_entity(text, encoding='utf-8'):
+    """Checks if a string has an entity
+    
+    >>> matched = has_entity('&pound;100')
+    ... "<re.Match object; span=(0, 7), match='&pound;'>"
+    """
     return constants.ENTITY_REGEX.search(
         utilities.string_to_unicode(text, encoding=encoding)
     )
 
 
 def replace_html_tags(text, replacement_token='', encoding='utf-8'):
+    """Remove HTML tags by the given `replacement_token`
+    
+    >>> replace_html_tags("<a>My link</a>")
+    ... "My link"
+    """
     return constants.HTML_TAG_REGEX.sub(
         replacement_token,
         utilities.string_to_unicode(text, encoding=encoding)
@@ -70,8 +80,13 @@ def replace_html_tags(text, replacement_token='', encoding='utf-8'):
 
 
 def remove_comments(text, encoding='utf-8'):
+    """Remove comments from a text
+    
+    >>> remove_comments("<!-- Example comment --><a>My Link</a>")
+    ... "<a>My Link</a>"
+    """
     unicode_text = utilities.string_to_unicode(text, encoding)
-    return constants.REMOVECOMMENTS_RE.sub('', unicode_text)
+    return constants.REMOVECOMMENTS_REGEX.sub('', unicode_text)
 
 
 class RemoveHTMLTags:
@@ -79,6 +94,7 @@ class RemoveHTMLTags:
     Removes HTML tags from a given string
 
     >>> text = '<div><p><b>This is a link:</b> <a href="http://www.example.com">example</a></p></div>'
+    ... remove_html_tags(text)
     ... "This is a link: example"
     """
 
@@ -109,16 +125,31 @@ remove_html_tags = RemoveHTMLTags()
 
 
 def remove_tags_with_content(text, which_ones=[], encoding=None):
+    """
+    Removes HTML tags with the specified tag from the given string
+
+    >>> text = '<a href="http://www.example.com">example</a><b>Example</b>'
+    ... remove_html_tags(text)
+    ... "<b>Example</b>"
+    """
     unicode_text = utilities.string_to_unicode(text, encoding=encoding)
     if which_ones:
         tags = "|".join(
-            [rf"<{tag}\b.*?</{tag}>|<{tag}\s*/>" for tag in which_ones])
+            [rf"<{tag}\b.*?</{tag}>|<{tag}\s*/>" for tag in which_ones]
+        )
         regex = re.compile(tags, re.DOTALL | re.IGNORECASE)
         unicode_text = regex.sub("", unicode_text)
     return unicode_text
 
 
-def replace_escape_chars(text, escape_characters=["\n", "\t", "\r"], replace_by='', encoding=None):
+def replace_escape_chars(text, escape_characters=['\n', '\t', '\r'], replace_by='', encoding=None):
+    """
+    Replace escape characters `\\n`, `\\t` or `\\r` by the given `replace_by`
+
+    >>> text = 'some text\nthat was captured'
+    ... replace_escape_chars(text)
+    ... 'some text that was captured'
+    """
     unicode_text = utilities.string_to_unicode(text, encoding=encoding)
     for item in escape_characters:
         unicode_replacement_text = utilities.string_to_unicode(

@@ -5,7 +5,7 @@ import posixpath
 import re
 from urllib.parse import (parse_qs, parse_qsl, quote, unquote, urldefrag,
                           urlencode, urlparse, urlsplit, urlunparse,
-                          urlunsplit)
+                          urlunsplit, urljoin)
 from urllib.request import pathname2url, url2pathname
 
 import requests
@@ -289,7 +289,7 @@ class URL:
         return self.raw_url == obj
 
     def __add__(self, obj):
-        return urljoin(self.raw_url, obj)
+        return URL(urljoin(self.raw_url, obj))
 
     def __contains__(self, obj):
         return obj in self.raw_url
@@ -306,7 +306,10 @@ class URL:
 
     @property
     def is_valid(self):
-        return self.raw_url.startswith('http')
+        return any([
+            self.raw_url.startswith('http://'),
+            self.raw_url.startswith('https://')
+        ])
 
     @property
     def has_fragment(self):
@@ -315,22 +318,18 @@ class URL:
             self.raw_url.endswith('#')
         ])
 
-    @classmethod
-    def create(cls, url):
-        return cls(url)
+    # @property
+    # def is_file(self):
+    #     path = PROJECT_PATH / 'data/file_extensions.txt'
+    #     file_extensions = read_document(path, as_list=True)
+    #     extension = self.as_path.suffix
 
-    @property
-    def is_file(self):
-        path = PROJECT_PATH / 'data/file_extensions.txt'
-        file_extensions = utilities.read_document(path, as_list=True)
-        extension = self.as_path.suffix
+    #     if extension == '':
+    #         return False
 
-        if extension == '':
-            return False
-
-        if self.as_path.suffix in file_extensions:
-            return True
-        return False
+    #     if self.as_path.suffix in file_extensions:
+    #         return True
+    #     return False
 
     @property
     def as_path(self):
@@ -346,6 +345,14 @@ class URL:
     def url_stem(self):
         return self.as_path.stem
 
+    @property
+    def is_secured(self):
+        return self.url_object.scheme == 'https'
+
+    @classmethod
+    def create(cls, url):
+        return cls(url)
+    
     def is_same_domain(self, url):
         incoming_url_object = urlparse(url)
         return incoming_url_object.netloc == self.url_object.netloc
@@ -385,15 +392,29 @@ class URL:
             return result
         return False
 
+    def test_url(self, regex):
+        """Test if an element in the url passes test. The
+        whole url is used to perform the test
+
+        >>> instance = URL('http://example.com/a')
+        ... instance.test_url('a')
+        ... True
+        """
+        whole_url_search = re.search(regex, self.raw_url)
+        if whole_url_search:
+            return True
+        return False
+
     def test_path(self, regex):
-        """Test if the url's path passes test
+        """Test if the url's path passes test. Only the
+        path is used to perform the test
 
         >>> instance = URL('http://example.com/a')
         ... instance.test_path(r'\/a')
         ... True
         """
-        result = re.search(regex, self.raw_url)
-        if result:
+        path_search = re.search(regex, self.url_object.path)
+        if path_search:
             return True
         return False
 
@@ -412,4 +433,4 @@ class URL:
             if exclude and value in exclude:
                 return True
             return False
-        return list(utilities.drop_while(clean_values, result))
+        return list(filter(clean_values, result))
