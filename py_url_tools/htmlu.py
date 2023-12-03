@@ -127,3 +127,14 @@ def replace_escape_chars(text, escape_characters=["\n", "\t", "\r"], replace_by=
 
 def strip_html5_whitespace(text):
     return text.strip(constants.HTML5_WHITESPACE)
+
+
+def deep_clean(text):
+    clean_text = remove_html_tags(text)
+    tokens = clean_text.split(' ')
+    # new_tokens = []
+    for token in tokens:
+        clean_token = strip_html5_whitespace(token)
+        yield clean_token
+        # new_tokens.append(clean_token)
+    # return ' '.join(new_tokens)

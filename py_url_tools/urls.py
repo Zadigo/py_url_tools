@@ -123,8 +123,17 @@ def get_url_parameter(url, name, default=None, keep_blank_values=False):
 
 @dataclasses.dataclass
 class URLParameter:
+    """Represents an 
+    url parameter"""
+
     key: str
     value: str
+
+    def __eq__(self, value):
+        return value == self.key
+
+    def __contains__(self, value):
+        return value in self.key
 
     def join(self):
         return f'{self.key}={self.value}'
@@ -262,22 +271,6 @@ def clean_url(url, keep_blank_values=True, keep_fragments=False, encoding='utf-8
             fragment
         )
     )
-
-
-class URL:
-    def __init__(self, value):
-        self._url = clean_url(value)
-
-    def __repr__(self):
-        return f'<URL: {self._url}>'
-
-    def __str__(self):
-        return self._url
-
-    def __eq__(self, value):
-        if isinstance(value, URL):
-            return value._url == self._url
-        return value == self._url
 
 
 # # url = 'http://www.example.org/r%E9sum%E9.xml#r&#xE9;sum&#xE9;'
